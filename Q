@@ -13,10 +13,22 @@ after we can do:
 - try UCB/gradient bandit/greedy with optimistic initialization
 
 
+
+questions
+- q*(a) started out equal??
+
+- + random: correct? time? 
+
+- optimize weighted avg?
+
 technical:
-- + random: correct? time? <> matrix faster than loop?
+- matrix faster than loop?
+
+- num of items in distribution
 
 - perf: current mean? always changing - only compare the final distribution vs.
     rewards?
+
+- graph
 
 - slides release

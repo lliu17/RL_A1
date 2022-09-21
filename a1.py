@@ -3,21 +3,26 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-RAND_SEED = int(input("Set random seed to: "))
 NUM_BANDITS = 10
 NUM_REWARDS = 10
 NUM_STEPS = 10000
 EPSILON = 0.1
 ALPHA = 0.5
 
-np.random.seed(RAND_SEED)
-# initial distribution: all 10 arms will return reward 0.5 
-# distributions = np.full((NUM_BANDITS, NUM_REWARDS), 0.5)
-distributions = np.random.normal(size=(NUM_BANDITS, NUM_REWARDS))
-rewards = np.full(10, 0.0)
-times_chosen = np.full(10, 0)
-# print(distributions)
-# print("init rewards =\n", rewards)
+distributions = None
+rewards = None
+rewards_record = None
+times_chosen = None
+
+def init():
+    RAND_SEED = int(input("Set random seed to: "))
+    np.random.seed(RAND_SEED)
+    global distributions, rewards, rewards_record, times_chosen
+    distributions = np.random.normal(size=(NUM_BANDITS, NUM_REWARDS)) 
+    rewards = np.full(10, 0.0)
+    rewards_record =  [np.array([]) for _ in range(10)]
+    print(rewards_record)
+    times_chosen = np.full(10, 0)
 
 def random_walk():
     for bandit_idx in range(len(distributions)):
@@ -25,26 +30,36 @@ def random_walk():
         for reward_idx in range(len(curr_bandit)):
             distributions[bandit_idx][reward_idx] += np.random.normal(loc = 0, scale = 0.01)
 
-def epsilon_greedy(e):
-    rand_num = np.random.rand()
-    if rand_num <= e:
-        bandit_idx = np.random.randint(10)
-    else:
-        bandit_idx = rewards.argmax()
-        # print("max bandit = ", bandit_idx)
+def sample_average(bandit_idx):
     prev_reward = rewards[bandit_idx]
     curr_reward = np.random.choice(distributions[bandit_idx])
     times_chosen[bandit_idx] += 1
     rewards[bandit_idx] = prev_reward + (curr_reward - prev_reward)/times_chosen[bandit_idx]
 
+# def weighted_average(bandit_idx):
+
+
+def epsilon_greedy(e, method):
+    rand_num = np.random.rand()
+    if rand_num <= e:
+        bandit_idx = np.random.randint(10)
+    else:
+        bandit_idx = rewards.argmax()
+    
+    if method == "sample_average":
+        sample_average(bandit_idx)
+    # else:
+
+
+
 def runStationary():
     for i in range(NUM_STEPS):
-        epsilon_greedy(EPSILON)
+        epsilon_greedy(EPSILON, "sample_average")
 
 def runNonstationary():
     for i in range(NUM_STEPS):
         random_walk()
-        epsilon_greedy(EPSILON)
+        epsilon_greedy(EPSILON, "sample_average")
 
 def validate(testName):
     print("#################")
@@ -73,6 +88,7 @@ def validate(testName):
     print()
 
 
+init()
 
 runStationary()
 validate("stationary test")
