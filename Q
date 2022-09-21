@@ -19,4 +19,4 @@ technical:
 - perf: current mean? always changing - only compare the final distribution vs.
     rewards?
 
-- slides
+- slides release
