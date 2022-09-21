@@ -9,21 +9,25 @@ what I've done so far:
 can we use the rank as a measure? e.g. 4th highest mean 
 
 after we can do:
-- change learning rate 
+- change alpha
 - try UCB/gradient bandit/greedy with optimistic initialization
 
+how quickly environment change
+sudden change (flip worst and best)
+more arms 
 
+how to pick + 
 
 questions
 - q*(a) started out equal??
 
-- + random: correct? time? 
+- + random: correct? time? matrix faster than loop?
 
 - optimize weighted avg?
 
-technical:
-- matrix faster than loop?
+- extension: sudden changes? drastic change? change detection? alpha proportional to change???
 
+technical:
 - num of items in distribution
 
 - perf: current mean? always changing - only compare the final distribution vs.

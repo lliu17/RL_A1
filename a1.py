@@ -3,51 +3,76 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 
+class Bandit:
+    def __init__(self, num_arms, variance):
+        self.__num_arms = num_arms
+        self.__means = np.full(num_arms, 0.0)
+        self.__variance = variance
+
+    def changeMean(self, arm_idx, delta):
+        self.__means[arm_idx] += delta
+
+    def showMean(self, arm_idx):
+        return self.__means[arm_idx]
+    
+    def showArmNum(self):
+        return self.__num_arms
+
+    def pull_arm(self, arm_idx):
+        return np.random.normal(loc = self.__means[arm_idx], scale = self.__variance)
+
+    def printAllMeans(self):
+        print(self.__means)
+
 NUM_BANDITS = 10
 NUM_REWARDS = 10
 NUM_STEPS = 10000
 EPSILON = 0.1
 ALPHA = 0.5
+VARIANCE = 1
+RAND_SEED = 0
 
-distributions = None
 rewards = None
-rewards_record = None
 times_chosen = None
+bandit = None
 
 def init():
-    RAND_SEED = int(input("Set random seed to: "))
+    # RAND_SEED = int(input("Set random seed to: "))
     np.random.seed(RAND_SEED)
-    global distributions, rewards, rewards_record, times_chosen
-    distributions = np.random.normal(size=(NUM_BANDITS, NUM_REWARDS)) 
+    global bandit 
+    bandit = Bandit(10, 0.1)
     rewards = np.full(10, 0.0)
-    rewards_record =  [np.array([]) for _ in range(10)]
-    print(rewards_record)
     times_chosen = np.full(10, 0)
 
+
 def random_walk():
-    for bandit_idx in range(len(distributions)):
-        curr_bandit = distributions[bandit_idx]
-        for reward_idx in range(len(curr_bandit)):
-            distributions[bandit_idx][reward_idx] += np.random.normal(loc = 0, scale = 0.01)
+    for arm_idx in range(bandit.showArmNum()):
+        bandit.changeMean(arm_idx, np.random.normal(loc = 0, scale = 0.01))
 
-def sample_average(bandit_idx):
-    prev_reward = rewards[bandit_idx]
-    curr_reward = np.random.choice(distributions[bandit_idx])
-    times_chosen[bandit_idx] += 1
-    rewards[bandit_idx] = prev_reward + (curr_reward - prev_reward)/times_chosen[bandit_idx]
+init()
+bandit.printAllMeans()
+random_walk()
+bandit.printAllMeans()
 
-# def weighted_average(bandit_idx):
+
+def sample_average(arm_idx):
+    prev_reward = rewards[arm_idx]
+    curr_reward = np.random.choice(distributions[arm_idx])
+    times_chosen[arm_idx] += 1
+    rewards[arm_idx] = prev_reward + (curr_reward - prev_reward)/times_chosen[arm_idx]
+
+# def weighted_average(arm_idx):
 
 
 def epsilon_greedy(e, method):
     rand_num = np.random.rand()
     if rand_num <= e:
-        bandit_idx = np.random.randint(10)
+        arm_idx = np.random.randint(10)
     else:
-        bandit_idx = rewards.argmax()
+        arm_idx = rewards.argmax()
     
     if method == "sample_average":
-        sample_average(bandit_idx)
+        sample_average(arm_idx)
     # else:
 
 
@@ -88,25 +113,30 @@ def validate(testName):
     print()
 
 
-init()
+# init()
 
-runStationary()
-validate("stationary test")
+# runStationary()
+# validate("stationary test")
 
-runNonstationary()
-validate("nonstationary test")
+# runNonstationary()
+# validate("nonstationary test")
+
+# mean = 5
+# scale = 1
+# num = np.random.normal(5, scale)
+# print(num)
 
 # for i in range(100):
 #     # random_walk()
-#     bandit_idx = np.random.randint(10)
-#     curr_reward = np.random.choice(distributions[bandit_idx])
-#     rewards[bandit_idx][1] += 1
-#     rewards[bandit_idx][0] = rewards[bandit_idx][0] + (curr_reward - rewards[bandit_idx][0])/rewards[bandit_idx][1]
+#     arm_idx = np.random.randint(10)
+#     curr_reward = np.random.choice(distributions[arm_idx])
+#     rewards[arm_idx][1] += 1
+#     rewards[arm_idx][0] = rewards[arm_idx][0] + (curr_reward - rewards[arm_idx][0])/rewards[arm_idx][1]
 #     # print()
-#     # print("bandit_idx =", bandit_idx)
+#     # print("arm_idx =", arm_idx)
 #     # print("curr_reward =", curr_reward)
-#     # print("prev reward =", rewards[bandit_idx][0])
-#     # print("updated_reward =", rewards[bandit_idx][0])
+#     # print("prev reward =", rewards[arm_idx][0])
+#     # print("updated_reward =", rewards[arm_idx][0])
 #     # print()  
 
 
@@ -140,4 +170,4 @@ validate("nonstationary test")
 # # plt.errorbar(np.arange(10), means, [means - mins, maxes - means], 
 # #     linestyle='None', marker='.')
 
-# # plt.show()
+plt.show()
