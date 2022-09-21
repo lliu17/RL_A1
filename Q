@@ -1,0 +1,22 @@
+
+what I've done so far:
+1. generate a nonstationary distribution 
+    -> result: arm with highest mean will be selected most
+
+2. nonstationary
+    -> not choosing the highest mean
+
+can we use the rank as a measure? e.g. 4th highest mean 
+
+after we can do:
+- change learning rate 
+- try UCB/gradient bandit/greedy with optimistic initialization
+
+
+technical:
+- + random: correct? time? <> matrix faster than loop?
+
+- perf: current mean? always changing - only compare the final distribution vs.
+    rewards?
+
+- slides
