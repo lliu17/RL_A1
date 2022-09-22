@@ -1,104 +1,188 @@
+'''
+Multi-armed Bandit 
+Luxi Liu
+Sep 2022
+
+Experiments for demonstrating the difficulties that sample-average methods have
+for nonstationary problems.
+'''
+
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-RAND_SEED = 3
-NUM_BANDITS = 10
-NUM_REWARDS = 10
-NUM_STEPS = 10000
-EPSILON = 0.1
-ALPHA = 0.1
+class Bandit:
+    def __init__(self, num_arms, variance):
+        self.__num_arms = num_arms
+        self.__means = np.full(num_arms, 0.0)
+        self.__variance = variance
 
-np.random.seed(RAND_SEED)
-# initial distribution: all 10 arms will return reward 0.5 
-# distributions = np.full((NUM_BANDITS, NUM_REWARDS), 0.5)
-distributions = np.random.normal(size=(NUM_BANDITS, NUM_REWARDS))
-rewards = np.full(10, 0.0)
-times_chosen = np.full(10, 0)
-# print(distributions)
-# print("init rewards =\n", rewards)
+    def changeMean(self, arm_idx, delta):
+        self.__means[arm_idx] += delta
 
-def random_walk():
-    for bandit_idx in range(len(distributions)):
-        curr_bandit = distributions[bandit_idx]
-        for reward_idx in range(len(curr_bandit)):
-            distributions[bandit_idx][reward_idx] += np.random.normal(loc = 0, scale = 0.01)
+    def getMean(self, arm_idx):
+        return self.__means[arm_idx]
+    
+    def getArmNum(self):
+        return self.__num_arms
 
-def epsilon_greedy(e):
+    def pull_arm(self, arm_idx):
+        return np.random.normal(loc = self.__means[arm_idx], scale = self.__variance)
+
+    # for testing - might delete
+    def set_random_means(self):
+        for i in range(self.__num_arms):
+            self.__means[i] = np.random.normal(loc = 0, scale = 1)
+
+    def printAllMeans(self):
+        print(self.__means)
+
+bandit = None
+rewards = None
+times_chosen = None
+epsilon = None
+alpha = None
+
+def init(random_seed, num_arms, variance):
+    np.random.seed(random_seed)
+
+    global bandit, rewards, times_chosen, epsilon, alpha
+    alpha = 0.1
+    epsilon = 0.1
+    bandit = Bandit(num_arms, variance)
+    rewards = np.full(num_arms, 0.0)
+    times_chosen = np.full(num_arms, 0)
+
+# adjust distribution mean for all the arms in a Bandit
+def random_walk(variance, debug=False):
+    for arm_idx in range(bandit.getArmNum()):
+        delta = np.random.normal(loc = 0, scale = variance)
+        bandit.changeMean(arm_idx, delta)
+        if debug:
+            print("delta = ", end="")
+            print("{0:.5f}".format(delta))
+
+
+def sample_average(arm_idx, prev_reward, curr_reward, debug=False):
+    if debug:
+        print("prev_reward=", prev_reward, ", curr_reward", curr_reward)
+        print("times_chosen", times_chosen)
+    rewards[arm_idx] = prev_reward + (curr_reward - prev_reward)/times_chosen[arm_idx]
+
+def weighted_average(arm_idx, prev_reward, curr_reward, alpha, debug=False):
+    rewards[arm_idx] = prev_reward + alpha * (curr_reward - prev_reward)
+
+def epsilon_greedy(e, method, debug=False):
     rand_num = np.random.rand()
     if rand_num <= e:
-        bandit_idx = np.random.randint(10)
+        arm_idx = np.random.randint(10)
     else:
-        bandit_idx = rewards.argmax()
-        # print("max bandit = ", bandit_idx)
-    prev_reward = rewards[bandit_idx]
-    curr_reward = np.random.choice(distributions[bandit_idx])
-    times_chosen[bandit_idx] += 1
-    rewards[bandit_idx] = prev_reward + (curr_reward - prev_reward)/times_chosen[bandit_idx]
+        arm_idx = rewards.argmax()
+    
+    prev_reward = rewards[arm_idx]
+    curr_reward = bandit.pull_arm(arm_idx)
+    times_chosen[arm_idx] += 1
 
-def validate():
-    # np.set_printoptions(precision=5)
-    np.set_printoptions(formatter={'float': '{: 0.5f}'.format})
+    if method == "sample_average":
+        sample_average(arm_idx, prev_reward, curr_reward, debug)
+    else:
+        weighted_average(arm_idx, prev_reward, curr_reward, alpha, debug)
 
-    # print()
-    # print("distributions =\n", distributions)
-    means = distributions.mean(1)
-    print()
-    # print("means =\n", means)
-    # print()
+def runNonstationary(num_steps, random_walk_variance, reward_method, debug=False):
+    for i in range(num_steps):
+        random_walk(random_walk_variance, debug)
+        epsilon_greedy(epsilon, reward_method, debug)
+        if debug:
+            print()
+            bandit.printAllMeans()
+
+def validate(test_name, num_steps):
+    print("\n------------------------------------")
+    print("Testing", end=" ")
+    print(test_name)
+    print("------------------------------------")
+
     new_rewards = []
-    for i in range(len(rewards)):
-        temp = np.append(rewards[i], means[i])
+    for i in range(bandit.getArmNum()):
+        temp = np.append(rewards[i], bandit.getMean(i))
         new_rewards.append(np.append(temp, times_chosen[i]))
-    # print("rewards =\n", rewards)
     new_rewards = sorted(new_rewards, key=lambda x : x[1], reverse=True)
 
-    print("[rewards, mean, times_chosen] =")
+    print("[rewards, mean, times_chosen]")
     for item in new_rewards:
         print(item)
-        # print("random reward =", reward)
-    # print()
-    # print("times chosen =", times_chosen)
 
     tot_rewards = 0
-    for i in range(NUM_BANDITS):
+    for i in range(bandit.getArmNum()):
         tot_rewards += rewards[i] * times_chosen[i]
     print()
     print("total rewards =", tot_rewards)
-    print("average rewards =", tot_rewards/NUM_STEPS)
+    print("average rewards =", tot_rewards/num_steps)
     print()
 
-def runStationary():
-    for i in range(NUM_STEPS):
-        epsilon_greedy(EPSILON)
+def calcAvgRewards():
+    tot_rewards = 0
+    for i in range(bandit.getArmNum()):
+        tot_rewards += rewards[i] * times_chosen[i]
+    return tot_rewards/len(times_chosen)
 
-def runNonstationary():
-    for i in range(NUM_STEPS):
-        random_walk()
-        epsilon_greedy(EPSILON)
+def reset_rewards(num_arms):
+    global rewards, times_chosen
+    rewards = np.full(num_arms, 0.0)
+    times_chosen = np.full(num_arms, 0)
+
+def runExperiment(num_steps, num_experiments):
+    np.set_printoptions(formatter={'float': '{: 0.5f}'.format})
+
+    num_arms = 10
+    variance = 0.1
+    random_walk_variance = 0.01
+
+    global alpha, epsilon
+    alpha = 0.1
+    epsilon = 0.1
+
+    avg_rewards_sample = np.array([])
+    avg_rewards_weight = np.array([])
+
+    for i in range(num_experiments):
+        # rand_seed = np.random.randint(0, num_experiments * 1000)
+        # print("rand_seed=", rand_seed)
+
+        global bandit
+        bandit = Bandit(num_arms, variance)
+        reset_rewards(num_arms)
+        
+        method = "sample_average"
+        # init(rand_seed, num_arms, variance)
+        runNonstationary(num_steps, random_walk_variance, method, debug=False)
+        avg_rewards_sample = np.append(avg_rewards_sample, calcAvgRewards())
+        validate(method, num_steps)
+        reset_rewards(num_arms)
+
+        method = "weighted_average"
+        # init(rand_seed, num_arms, variance)
+        runNonstationary(num_steps, random_walk_variance, method, debug=False)
+        avg_rewards_weight = np.append(avg_rewards_weight, calcAvgRewards())
+        validate(method, num_steps)
 
 
-validate()
+        
+    
+    outperform = 0
+    for i in range(num_experiments):
+        if avg_rewards_sample[i] < avg_rewards_weight[i]:
+            outperform += 1
+    print()
+    print("tot experiment =", num_experiments, ", weighted outperform =", outperform)
+    # print()
+    # print("avg_rewards_sample:", avg_rewards_sample)
+    # print()
+    # print("avg_rewards_weight:", avg_rewards_weight)
+    # print()
 
-
-# for i in range(100):
-#     # random_walk()
-#     bandit_idx = np.random.randint(10)
-#     curr_reward = np.random.choice(distributions[bandit_idx])
-#     rewards[bandit_idx][1] += 1
-#     rewards[bandit_idx][0] = rewards[bandit_idx][0] + (curr_reward - rewards[bandit_idx][0])/rewards[bandit_idx][1]
-#     # print()
-#     # print("bandit_idx =", bandit_idx)
-#     # print("curr_reward =", curr_reward)
-#     # print("prev reward =", rewards[bandit_idx][0])
-#     # print("updated_reward =", rewards[bandit_idx][0])
-#     # print()  
-
-
-
-
-
+runExperiment(10000, 2)
 
 # # x = np.random.normal(loc = 0, scale = 0.01)
 # # print(x)
@@ -126,4 +210,4 @@ validate()
 # # plt.errorbar(np.arange(10), means, [means - mins, maxes - means], 
 # #     linestyle='None', marker='.')
 
-# # plt.show()
+plt.show()
