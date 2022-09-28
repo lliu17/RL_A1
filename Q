@@ -1,3 +1,9 @@
+Next:
+1. sudden change
+2. random walk var ++
+3. stationary - sample avg is good?
+4. more arms
+
 
 what I've done so far:
 1. generate a nonstationary distribution 

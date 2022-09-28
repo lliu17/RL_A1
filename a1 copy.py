@@ -206,7 +206,14 @@ print("count_rand =", count_rand)
 
 
 
+# fig = plt.figure()
+    # ax = fig.add_subplot(111)
+    # plt.text(num_steps/3, 0, 'Initial mean = 0, Initial Variance = 0.1', style='italic', 
+    #          bbox={'facecolor': 'green', 'ALPHA': 0.5, 'pad': 10})
 
+    # plt.text(num_steps/3, -0.1, 'Random Walk Variance = 0.01, Learning Rate = 0.1, Epsilon = 0.1', style='italic', 
+    #         bbox={'facecolor': 'blue', 'ALPHA': 0.5, 'pad': 10})
+    # plt.figtext(0.5, 0.01, txt, wrap=True, horizontalalignment='center', fontsize=9)
 
 
 # def getMax():
