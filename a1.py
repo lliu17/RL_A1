@@ -44,25 +44,13 @@ class Bandit:
         return x
     
     def random_walk(self, rand_walk_var, debug=False):
-        # for arm_idx in range(self.__num_arms):
-        #     delta = np.random.normal(loc = 0, scale = rand_walk_var)
-        #     self.__means[arm_idx] += delta
-        #     if debug:
-        #         print("delta = ", end="")
-        #         print("{0:.5f}".format(delta))
-        # print("means before\n", self.__means)
         deltas = np.random.normal(size=self.__num_arms, loc = 0, scale = rand_walk_var)
         self.__means = np.add(self.__means, deltas)
-        # print("deltas\n", deltas)
-        # print("means after\n", self.__means)
-    
+
     def isOptimal(self, idx):
         max_arm_idx = self.__means.argmax()
-        # print("chosen = ", idx)
-        # print("optimal = ", self.__means.argmax())
         return idx == max_arm_idx
 
-    # for testing - might delete
     def reset_means(self):
         self.__means = np.full(self.__num_arms, 0.0)
     
@@ -116,10 +104,6 @@ def epsilon_greedy(step_idx, exp_idx, e, method, debug=False):
         arm_idx = np.random.randint(bandit.getArmNum())
     else:   
         arm_idx = estimated_rewards.argmax()
-
-    # print("means=")
-    # bandit.printAllMeans()
-    # print("optimal?", bandit.isOptimal(arm_idx))
 
     # print("pulling on =", arm_idx)   
     prev_reward = estimated_rewards[arm_idx]
@@ -196,7 +180,6 @@ def runExperiment(num_steps, num_experiments, arms, var, rand_walk_var, alpha, e
         tot_weighted += rew
     print("tot_weighted =", tot_weighted)
 
-    # print("avg_obtained_rewards_sample:\n", avg_obtained_rewards_sample)
     plt.title(str(bandit.getArmNum()) + '-Armed Bandit (Stationary)')
     x = np.arange(num_steps)
     
@@ -217,4 +200,4 @@ def runExperiment(num_steps, num_experiments, arms, var, rand_walk_var, alpha, e
 # print("avg weight", avg_obtained_rewards_weight)
 
 runExperiment(num_steps=10000, num_experiments=1000, arms=10, var=1,
-              rand_walk_var=0.01, alpha=0.3, epsilon=0.1)
+              rand_walk_var=0.01, alpha=0.1, epsilon=0.1)
